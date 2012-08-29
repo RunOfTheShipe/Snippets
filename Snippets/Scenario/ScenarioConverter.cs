@@ -4,15 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-
-
-namespace FileModifier
+namespace Snippets.Scenario
 {
-   
-    class Program
+    public class ScenarioConverter
     {
-        
-        static void Main(string[] args)
+        /// <summary>
+        /// Static function that is used to parse the command line arguments to the program and execute the converstion.
+        /// </summary>
+        /// <param name="args"></param>
+        public static void RunWithArgs(string[] args)
         {
             //ModifyAllFilesInSomeRandomDirectory(@"B:\Production\Production Scenarios");
             if (0 < args.Length)
@@ -53,18 +53,18 @@ namespace FileModifier
                         bool bInTheSpecialRegion = false;
                         bool bAfterTheSpecialRegion = false;
                         char a = 'A';
-                        
+
 
 
                         while (null != (strCurrentLine = aReader.ReadLine()))
                         {
-                           
+
                             string strNewString;
-                            
+
                             // Modify lines
                             if (!bInTheSpecialRegion)
                             {
-                                if (strCurrentLine.Contains("Steps:")) 
+                                if (strCurrentLine.Contains("Steps:"))
                                 {
                                     bInTheSpecialRegion = true;
                                     strNewString = strCurrentLine.Replace("Steps:", "|| Step:");
@@ -89,10 +89,10 @@ namespace FileModifier
                                     strNewString = strCurrentLine;
                                 }
                             }
-                            
+
                             else if (bInTheSpecialRegion) // Andrew's happy time!
                             {
-                                 if (String.Empty == strCurrentLine)
+                                if (String.Empty == strCurrentLine)
                                 {
                                     strNewString = String.Empty;
                                     bInTheSpecialRegion = false;
@@ -103,25 +103,25 @@ namespace FileModifier
                                     strNewString = a + ". " + strCurrentLine;
                                     a++;
                                 }
-                             }
-                             else
-                             {
-                                 strNewString = strCurrentLine + "***";
-                             }
+                            }
+                            else
+                            {
+                                strNewString = strCurrentLine + "***";
+                            }
 
 
                             // Add them to the new file.
                             aWriter.WriteLine(strNewString);
-                            
-                            }
 
-                            
                         }
+
+
                     }
                 }
-                Console.WriteLine("File Modified: " + strFullFilePath + " at: " + DateTime.Now);
-                //Console.WriteLine("Scenarios Modified: " + nScenariosModified);
+            }
+            Console.WriteLine("File Modified: " + strFullFilePath + " at: " + DateTime.Now);
+            //Console.WriteLine("Scenarios Modified: " + nScenariosModified);
         }
-          }
     }
+}
 
