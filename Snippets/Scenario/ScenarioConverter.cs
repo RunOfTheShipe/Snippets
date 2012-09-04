@@ -4,17 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Snippets.Scenario
+
+namespace FileModifier
 {
-    public class ScenarioConverter
+
+    class Program
     {
-        /// <summary>
-        /// Static function that is used to parse the command line arguments to the program and execute the converstion.
-        /// </summary>
-        /// <param name="args"></param>
-        public static void RunWithArgs(string[] args)
+
+        static void Main(string[] args)
         {
-            //ModifyAllFilesInSomeRandomDirectory(@"B:\Production\Production Scenarios");
+            //Enable the line below to run without using the terminal
+            ModifyAllFilesInSomeRandomDirectory(@"C:\production\converted");
             if (0 < args.Length)
             {
                 ModifyAllFilesInSomeRandomDirectory(args[0]);
@@ -50,8 +50,8 @@ namespace Snippets.Scenario
                     using (var aReader = new StreamReader(strFullFilePath))
                     {
                         string strCurrentLine = null;
-                        bool bInTheSpecialRegion = false;
-                        bool bAfterTheSpecialRegion = false;
+                        bool bInStepsSection = false;
+                        bool bInResultsSection = false;
                         char a = 'A';
 
 
@@ -62,60 +62,106 @@ namespace Snippets.Scenario
                             string strNewString;
 
                             // Modify lines
-                            if (!bInTheSpecialRegion)
+                            if (!bInStepsSection && !bInResultsSection)
                             {
-                                if (strCurrentLine.Contains("Steps:"))
+                                if (strCurrentLine.Contains("Steps:") || strCurrentLine.Contains("Step:"))
                                 {
-                                    bInTheSpecialRegion = true;
-                                    strNewString = strCurrentLine.Replace("Steps:", "|| Step:");
-                                    //strNewString = strCurrentLine.Replace("Step:", "|| Step:");
+                                    bInStepsSection = true;
+                                    strNewString = Environment.NewLine + "|| Step:" + Environment.NewLine;
+                                }
+                                                              
+                                else if (strCurrentLine.Contains("** P") || strCurrentLine.Contains("**P") || strCurrentLine.Contains("**F") || strCurrentLine.Contains("** F"))
+                                {
+                                    strNewString = "blank";
                                 }
 
-                                else if (strCurrentLine.Contains("Step:"))
+                                else if (strCurrentLine.Contains("�"))
                                 {
-                                    bInTheSpecialRegion = true;
-                                    strNewString = strCurrentLine.Replace("Step:", "|| Step:");
+                                    strNewString = strCurrentLine.Replace("�", "");
                                 }
-
-                                else if (bAfterTheSpecialRegion)
-                                {
-                                    strNewString = strCurrentLine.Replace("Expected Outcome:", "|| Expected Outcome:");
-                                    a = 'A';
-                                    bAfterTheSpecialRegion = false;
-                                }
-
+                               
                                 else
                                 {
                                     strNewString = strCurrentLine;
                                 }
                             }
 
-                            else if (bInTheSpecialRegion) // Andrew's happy time!
+                            else if (bInStepsSection)
                             {
                                 if (String.Empty == strCurrentLine)
                                 {
-                                    strNewString = String.Empty;
-                                    bInTheSpecialRegion = false;
-                                    bAfterTheSpecialRegion = true;
+                                    strNewString = "blank";
+                                                                        
+                                }
+                                else if (strCurrentLine.Contains("** P") || strCurrentLine.Contains("**P") || strCurrentLine.Contains("**F") || strCurrentLine.Contains("** F"))
+                                {
+                                    strNewString = "blank";
+                                }
+                                
+                                else if (strCurrentLine.Contains("Expected Outcome:") || strCurrentLine.Contains("Expected Outcomes:"))
+                                {
+                                    strNewString = Environment.NewLine + "|| Expected Outcome:" + Environment.NewLine;
+                                    bInStepsSection = false;
+                                    bInResultsSection = true;
+                                    a = 'A';
                                 }
                                 else
                                 {
-                                    strNewString = a + ". " + strCurrentLine;
+                                    strNewString = strCurrentLine.Replace("�", "");
+                                    strNewString = a + ". " + strNewString;
                                     a++;
+                                }                                
+                                
+                            }
+                            else if (bInResultsSection)
+                            {
+                                if (String.Empty == strCurrentLine)
+                                {
+                                    strNewString = "blank";
+                                   //bInResultsSection = false;
+                                    
                                 }
+                                else if (strCurrentLine.Contains("Step:") || strCurrentLine.Contains("Steps:"))
+                                {
+                                    strNewString = Environment.NewLine + Environment.NewLine + Environment.NewLine + "|| Step:" + Environment.NewLine;
+                                    bInStepsSection = true;
+                                    bInResultsSection = false;
+                                    a = 'A';
+                                }
+                                    else if (strCurrentLine.Contains("** P") || strCurrentLine.Contains("**P") || strCurrentLine.Contains("**F") || strCurrentLine.Contains("** F"))
+                                {
+                                    strNewString = "blank";
+                                }
+                                else if (strCurrentLine.Contains("Trial") || (strCurrentLine.Contains("Scenario")) || (strCurrentLine.Contains("trial")) || (strCurrentLine.Contains("scenario")) || (strCurrentLine.Contains("option")) || (strCurrentLine.Contains("Option")))
+                                {
+                                    strNewString = Environment.NewLine + strCurrentLine + Environment.NewLine;
+                                }
+                                else
+                                {
+                                    strNewString = strCurrentLine.Replace("�", "");
+                                    strNewString = a + ". " + strNewString;
+                                    a++;
+                                }      
                             }
                             else
                             {
-                                strNewString = strCurrentLine + "***";
+                                strNewString = strCurrentLine; //(for testing: + "+++++NOT CHANGED+++++";)
+                            }
+                        
+
+
+                            // Add them to the new file. If deleting a line, strNewString is set to blank otherwise replace with new text
+                            if ("blank" == strNewString)
+                            {
+                                aWriter.Write(String.Empty);
                             }
 
-
-                            // Add them to the new file.
-                            aWriter.WriteLine(strNewString);
+                            else
+                            {
+                                aWriter.WriteLine(strNewString);
+                            }
 
                         }
-
-
                     }
                 }
             }
@@ -125,4 +171,3 @@ namespace Snippets.Scenario
     }
 }
 
-//comment added in Andrew test branch and merged back to master -- can be deleted
